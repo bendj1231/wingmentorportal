@@ -2,13 +2,11 @@ import React, { useState, useEffect, Suspense } from 'react';
 import './App.css';
 
 // Mentor Management System Imports
-import { onAuthStateChange, type AuthState } from './lib/auth';
+import { onAuthStateChange, type AuthState, SUPER_ADMIN_EMAIL, signOut, supabase } from './lib/supabase-auth';
 import { PilotProfilePage } from './pages/PilotProfilePage';
-import { MentorManagementPage } from './pages/MentorManagementPage';
 import FoundationalProgramPage from './pages/FoundationalProgramPage';
 import { WingMentorHome } from './pages/WingMentorHome';
 import { RecognitionAchievementPage } from './pages/RecognitionAchievementPage';
-import { auth } from './lib/firebase';
 
 // Declare the remote module for TypeScript
 // @ts-ignore
@@ -94,6 +92,13 @@ export const Icons = {
       <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
     </svg>
   ),
+  Unlock: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+      <line x1="17" y1="7" x2="23" y2="7" />
+    </svg>
+  ),
   User: (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -106,6 +111,11 @@ export const Icons = {
       <polyline points="22 4 12 14.01 9 11.01" />
     </svg>
   ),
+  Check: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  ),
   FileText: (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -113,6 +123,11 @@ export const Icons = {
       <line x1="16" y1="13" x2="8" y2="13" />
       <line x1="16" y1="17" x2="8" y2="17" />
       <polyline points="10 9 9 9 8 9" />
+    </svg>
+  ),
+  Play: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polygon points="5 3 19 12 5 21 5 3" />
     </svg>
   ),
   ChevronLeft: (props: React.SVGProps<SVGSVGElement>) => (
@@ -130,6 +145,12 @@ export const Icons = {
       <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
       <line x1="3" y1="9" x2="21" y2="9" />
       <line x1="9" y1="21" x2="9" y2="9" />
+    </svg>
+  ),
+  Home: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M3 11l9-9 9 9" />
+      <path d="M5 12v9h14v-9" />
     </svg>
   ),
   Shield: (props: React.SVGProps<SVGSVGElement>) => (
@@ -174,6 +195,18 @@ export const Icons = {
       <line x1="16" y1="11" x2="22" y2="11" />
     </svg>
   ),
+  Loader: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <line x1="12" y1="2" x2="12" y2="6" />
+      <line x1="12" y1="18" x2="12" y2="22" />
+      <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+      <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+      <line x1="2" y1="12" x2="6" y2="12" />
+      <line x1="18" y1="12" x2="22" y2="12" />
+      <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+      <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+    </svg>
+  ),
   Download: (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -186,6 +219,40 @@ export const Icons = {
       <circle cx="12" cy="12" r="10" />
       <line x1="2" y1="12" x2="22" y2="12" />
       <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  ),
+  MessageCircle: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    </svg>
+  ),
+  MessageSquare: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  ),
+  Phone: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M22 16.92V21a2 2 0 0 1-2.18 2 19.86 19.86 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.86 19.86 0 0 1 2 3.18 2 2 0 0 1 4 1h4.09a2 2 0 0 1 2 1.72c.12.81.37 1.6.72 2.34a2 2 0 0 1-.45 2.11L9.1 8.91a16 16 0 0 0 6 6l1.74-1.26a2 2 0 0 1 2.11-.45c.74.35 1.53.6 2.34.72A2 2 0 0 1 22 16.92z" />
+    </svg>
+  ),
+  Mail: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+      <polyline points="22,6 12,13 2,6" />
+    </svg>
+  ),
+  AlertTriangle: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  ),
+  Settings: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.78 1.78 0 0 0 .37 2l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.78 1.78 0 0 0-2-.37 1.78 1.78 0 0 0-1 1.62V22a2 2 0 1 1-4 0v-.09A1.78 1.78 0 0 0 8 19.91a1.78 1.78 0 0 0-2 .37l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.78 1.78 0 0 0 .37-2 1.78 1.78 0 0 0-1.62-1H2a2 2 0 1 1 0-4h.09A1.78 1.78 0 0 0 4.09 8a1.78 1.78 0 0 0-.37-2l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.78 1.78 0 0 0 2 .37H9a1.78 1.78 0 0 0 1-1.62V2a2 2 0 1 1 4 0v.09a1.78 1.78 0 0 0 1 1.62 1.78 1.78 0 0 0 2-.37l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.78 1.78 0 0 0-.37 2V9a1.78 1.78 0 0 0 1.62 1H22a2 2 0 1 1 0 4h-.09a1.78 1.78 0 0 0-1.62 1z" />
     </svg>
   ),
   Zap: (props: React.SVGProps<SVGSVGElement>) => (
@@ -311,6 +378,7 @@ import { ATPLPathwayPage } from './pages/ATPLPathwayPage';
 import { EmergingAirTaxiPage } from './pages/EmergingAirTaxiPage';
 import { PrivateSectorPage } from './pages/PrivateSectorPage';
 import { LoginPage } from './pages/LoginPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { EnrollmentOnboardingPage } from './pages/EnrollmentOnboardingPage';
 import { PostEnrollmentSlideshow } from './pages/PostEnrollmentSlideshow';
 import { AIScreeningPage } from './pages/AIScreeningPage';
@@ -333,10 +401,13 @@ function App() {
   
   const [currentView, setCurrentView] = useState<
     'login' | 'hub' | 'dashboard' | 'programs' | 'pathways' | 'applications' |
-    'foundational' | 'atpl' | 'airtaxi' | 'privatesector' | 'foundational-onboarding' | 'post-enrollment-slideshow' | 'ai-screening' | 'remote-segment' | 'terms-conditions' | 'mentorship' | 'mentor-management' |
-    'module-01' | 'module-02' | 'module-03' | 'pilot-profile' | 'recognition'
+    'foundational' | 'atpl' | 'airtaxi' | 'privatesector' | 'foundational-onboarding' | 'post-enrollment-slideshow' | 'ai-screening' | 'remote-segment' | 'terms-conditions' | 'mentorship' | 'reset-password' |
+    'module-01' | 'module-02' | 'module-03' | 'pilot-profile' | 'recognition' | 'verification'
   >('login');
   const [completedModules, setCompletedModules] = useState<string[]>([]);
+  const [lastLoginEmail, setLastLoginEmail] = useState<string | null>(null);
+
+  const isSuperAdmin = (authState.userProfile?.role === 'super_admin') || (authState.user?.email === SUPER_ADMIN_EMAIL) || (lastLoginEmail === SUPER_ADMIN_EMAIL);
 
   const handleModuleComplete = (moduleId: string) => {
     setCompletedModules(prev => prev.includes(moduleId) ? prev : [...prev, moduleId]);
@@ -357,32 +428,75 @@ function App() {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChange((nextState) => {
+    // Clear any existing session on app start to prevent auto-login
+    const clearSessionOnStart = async () => {
+      try {
+        // Only clear session if we're starting fresh (no hash params and not on reset password page)
+        const isResetPasswordPage = window.location.pathname.includes('/reset-password') || 
+                                    window.location.hash.includes('type=recovery');
+        
+        if (!window.location.hash && !window.location.search && !isResetPasswordPage) {
+          await supabase.auth.signOut({ scope: 'global' });
+          localStorage.removeItem('supabase.auth.token');
+          localStorage.removeItem('supabase.auth.refreshToken');
+        }
+      } catch (error) {
+        console.log('Session cleared on start');
+      }
+    };
+
+    clearSessionOnStart();
+
+    const { data: { subscription } } = onAuthStateChange((nextState) => {
       setAuthState(nextState);
-      if (nextState.user) {
+      if (nextState.user?.email) {
+        setLastLoginEmail(nextState.user.email);
+      }
+      
+      // Check if we're on reset password page
+      const isResetPasswordPage = window.location.pathname.includes('/reset-password') || 
+                                  window.location.hash.includes('type=recovery');
+      
+      // Only redirect to hub if we're not on the reset password page AND user is authenticated
+      if (nextState.user && !isResetPasswordPage && !authState.loading) {
         setCurrentView('hub');
-      } else {
+      } else if (!nextState.user && !isResetPasswordPage && !authState.loading) {
         setCurrentView('login');
+      } else if (isResetPasswordPage) {
+        // Keep on reset password page regardless of auth state
+        setCurrentView('reset-password');
       }
     });
 
-    return () => unsubscribe && unsubscribe();
-  }, []);
+    return () => subscription?.unsubscribe();
+  }, [currentView, authState.loading]);
 
-  const handleLogin = () => {
+  const handleLogin = (email: string) => {
+    setLastLoginEmail(email);
     setShowLoading(true);
     setTimeout(() => {
       setShowLoading(false);
       setCurrentView('hub');
-    }, 4500);
+    }, 2000);
   };
 
   const handleLogout = async () => {
     try {
-      await auth.signOut();
+      // Clear URL hash to prevent routing issues
+      window.location.hash = '';
+      // Force sign out and reset auth state
+      await signOut();
+      // Clear any stored session
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('supabase.auth.refreshToken');
       setCurrentView('login');
+      // Force page reload to clear any lingering state
+      window.location.reload();
     } catch (error) {
       console.error("Logout error:", error);
+      // Fallback: force redirect to login
+      setCurrentView('login');
+      window.location.hash = '';
     }
   };
 
@@ -391,6 +505,34 @@ function App() {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Handle URL routing for password reset
+  useEffect(() => {
+    const handleRecoveryRouting = () => {
+      const pathname = window.location.pathname;
+      const hash = window.location.hash;
+
+      // Only route to reset-password if we have actual recovery params
+      if ((pathname.includes('/reset-password') || hash.includes('type=recovery')) && 
+          (hash.includes('access_token') || hash.includes('refresh_token'))) {
+        setCurrentView('reset-password');
+      }
+    };
+
+    // Check on initial load
+    handleRecoveryRouting();
+
+    const handleHashChange = () => handleRecoveryRouting();
+    const handlePopState = () => handleRecoveryRouting();
+
+    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
   // Hydrate onClickActions
@@ -427,6 +569,8 @@ function App() {
         </div>
       ) : currentView === 'login' ? (
         <LoginPage onLogin={handleLogin} />
+      ) : currentView === 'reset-password' ? (
+        <ResetPasswordPage />
       ) : currentView === 'hub' ? (
         <WingMentorHome 
           onLogout={handleLogout} 
@@ -444,6 +588,7 @@ function App() {
           onLaunchModule02={() => setCurrentView('module-02')}
           onLaunchModule03={() => setCurrentView('module-03')}
           completedModules={completedModules}
+          userProfile={authState.userProfile}
         />
       ) : currentView === 'foundational-onboarding' ? (
         <EnrollmentOnboardingPage
@@ -464,7 +609,7 @@ function App() {
           onLogout={handleLogout}
         />
       ) : currentView === 'atpl' ? (
-        <ATPLPathwayPage onBack={() => setCurrentView('pathways')} onLogout={handleLogout} />
+        <ATPLPathwayPage onBack={() => setCurrentView('pathways')} />
       ) : currentView === 'airtaxi' ? (
         <EmergingAirTaxiPage onBack={() => setCurrentView('pathways')} onLogout={handleLogout} />
       ) : currentView === 'privatesector' ? (
@@ -480,14 +625,6 @@ function App() {
         <MentorshipProtocolsModulePage onBack={() => setCurrentView('foundational')} onLogout={handleLogout} />
       ) : currentView === 'module-03' ? (
         <PeerAdvocacyModulePage onBack={() => setCurrentView('foundational')} onLogout={handleLogout} />
-      ) : currentView === 'mentor-management' && authState.userProfile ? (
-        <MentorManagementPage
-          onBack={() => setCurrentView('hub')}
-          onLogout={handleLogout}
-          userProfile={authState.userProfile}
-          onSwitchSystem={handleSwitchSystem}
-          currentSystem={authState.currentSystem}
-        />
       ) : currentView === 'pilot-profile' ? (
         <PilotProfilePage
           onBack={() => setCurrentView('applications')}

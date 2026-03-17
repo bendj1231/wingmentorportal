@@ -18,6 +18,8 @@ export interface AppAccess {
   restricted?: boolean;
 }
 
+import type { UserTrack } from '../config/accessControl';
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -32,7 +34,9 @@ export interface UserProfile {
   appAccess: AppAccess[];
   createdAt: Date;
   lastLogin?: Date;
-  status: 'active' | 'suspended' | 'pending' | 'terminated' | 'restricted';
+  status: 'active' | 'suspended' | 'pending' | 'terminated' | 'restricted' | 'transitioning';
+  isNewUser?: boolean;
+  track?: UserTrack; // User's current access track
   managedBy?: string; // ID of mentor manager who manages this user
   moduleProgress?: Record<string, number>; // module id -> completion %
   performanceScore?: number; // 0-100
@@ -77,14 +81,23 @@ export const ROLE_PERMISSIONS: Record<UserRole['type'], Permission['id'][]> = {
 };
 
 export const AVAILABLE_APPS = [
-  { id: 'foundational', name: 'Foundational Program', required: true },
-  { id: 'transition', name: 'Transition Program', required: false },
-  { id: 'w1000', name: 'W1000 Simulator', required: false },
-  { id: 'mentorship', name: 'Mentorship Supervision', required: false },
-  { id: 'pilot_gap', name: 'Pilot Gap Module', required: false },
-  { id: 'mentorship_protocols', name: 'Mentorship Protocols', required: false },
-  { id: 'peer_advocacy', name: 'Peer Advocacy', required: false },
-  { id: 'atpl_pathway', name: 'ATPL Pathway', required: false },
-  { id: 'airtaxi_pathway', name: 'Air Taxi Pathway', required: false },
-  { id: 'private_sector', name: 'Private Sector Pathway', required: false }
+  { id: 'foundational', name: 'Foundational Program', required: true, category: 'programs' },
+  { id: 'transition', name: 'Transition Program', required: false, category: 'programs' },
+  { id: 'atpl_pathway', name: 'ATPL Pathway', required: false, category: 'pathways' },
+  { id: 'airtaxi_pathway', name: 'Air Taxi Pathway', required: false, category: 'pathways' },
+  { id: 'private_sector', name: 'Private Sector Pathway', required: false, category: 'pathways' },
+  { id: 'w1000', name: 'W1000 Simulator', required: false, category: 'applications' },
+  { id: 'mentorship', name: 'Mentorship Supervision', required: false, category: 'applications' },
+  { id: 'pilot_gap', name: 'Pilot Gap Module', required: false, category: 'applications' },
+  { id: 'mentorship_protocols', name: 'Mentorship Protocols', required: false, category: 'applications' },
+  { id: 'peer_advocacy', name: 'Peer Advocacy', required: false, category: 'applications' },
+  { id: 'pilot_recognition', name: 'Pilot Recognition System', required: false, category: 'systems' },
+  { id: 'atlas_cv', name: 'ATLAS CV System', required: false, category: 'systems' }
 ] as const;
+
+export const APP_CATEGORIES = {
+  programs: { name: 'Programs', description: 'Core training programs' },
+  pathways: { name: 'Pathways', description: 'Career progression pathways' },
+  applications: { name: 'Applications', description: 'Specialized applications and tools' },
+  systems: { name: 'Systems', description: 'Platform systems and services' }
+} as const;

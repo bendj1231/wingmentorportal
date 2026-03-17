@@ -588,14 +588,14 @@ export const PilotProfilePage: React.FC<PilotProfilePageProps> = ({ onBack, onVi
     base: 'EGLL (London Heathrow)',
     studyHours: 2,
     examHours: 0,
-    totalHours: 194,
-    picHours: 9,
+    totalHours: 0,
+    picHours: 0,
     licenseType: 'Student Pilot',
-    licenseStatus: 'Active',
+    licenseStatus: 'Pending Verification',
     avgRating: '0%',
     passRate: '0%',
     interviewCount: 0,
-    flightLogbookHours: 20.0,
+    flightLogbookHours: 0,
     mentorHours: 'TEMPORARILY UNAVAILABLE',
     foundationalProgress: 'FOUNDATIONAL PROGRAM IN PROGRESS',
     radioLicenseNumber: 'N/A',
@@ -727,16 +727,18 @@ export const PilotProfilePage: React.FC<PilotProfilePageProps> = ({ onBack, onVi
           console.warn('Unable to load foundational progress:', progressError);
         }
 
+        const logbookHoursRounded = parseFloat(totalFlightHours.toFixed(1));
+
         setPilotData(prev => ({
           ...prev,
           studyHours,
           examHours: Math.round(examHours / 60),
           avgRating,
           passRate,
-          flightLogbookHours: parseFloat(totalFlightHours.toFixed(1)),
+          flightLogbookHours: logbookHoursRounded,
           licenseType,
           licenseStatus,
-          totalHours: totalHoursOverride,
+          totalHours: logbookHoursRounded,
           picHours: picHoursOverride,
           foundationalProgress,
           radioLicenseNumber: updatedRadioNumber,

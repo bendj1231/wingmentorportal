@@ -3,8 +3,8 @@ import { Icons } from '../App';
 import type { UserProfile } from '../types/user';
 import { RecognitionAchievementPage } from './RecognitionAchievementPage';
 import { PilotProfilePage } from './PilotProfilePage';
-import { MentorManagementPage } from './MentorManagementPage';
 import FoundationalProgramPage from './FoundationalProgramPage';
+import { TransitionProgramPage } from './TransitionProgramPage';
 import ContactPage from './ContactPage';
 import { ATPLPathwayPage } from './ATPLPathwayPage';
 import { PrivateSectorPathwayPage } from './PrivateSectorPathwayPage';
@@ -13,8 +13,8 @@ import ExaminationResultsPage from './ExaminationResultsPage';
 import AtlasResumePage from './AtlasResumePage';
 import PrintableResumePage from './PrintableResumePage';
 import { DigitalLogbookPage } from './DigitalLogbookPage';
-import { MentorLogbookPage } from './MentorLogbookPage';
 import { PathwayCarousel } from '../components/PathwayCarousel';
+import { getUserTrack, getTrackConfig, canAccessPage, getRedirectPage } from '../config/accessControl';
 
 interface WingMentorHomeProps {
   onLogout: () => void;
@@ -28,8 +28,8 @@ type MainView =
   | 'applications'
   | 'recognition'
   | 'pilot-portfolio'
-  | 'mentor-management'
   | 'foundational'
+  | 'transition'
   | 'pilot-profile'
   | 'contact'
   | 'wingmentor-network'
@@ -38,7 +38,6 @@ type MainView =
   | 'examination-results'
   | 'logbook'
   | 'digital-logbook'
-  | 'mentor-logbook'
   | 'atlas-resume'
   | 'printable-resume';
 
@@ -59,8 +58,19 @@ const pathwayUpdates = [
 
 export const WingMentorHome: React.FC<WingMentorHomeProps> = ({ onLogout, userProfile }) => {
   const [mainView, setMainView] = useState<MainView>('dashboard');
+  const [isMobile, setIsMobile] = useState(false);
   const SIDEBAR_BASE_WIDTH = 520;
   const SIDEBAR_BASE_HEIGHT = 980;
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [sidebarScale, setSidebarScale] = useState(1);
 
   useEffect(() => {
@@ -75,6 +85,15 @@ export const WingMentorHome: React.FC<WingMentorHomeProps> = ({ onLogout, userPr
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const userDisplayName = (userProfile?.displayName && userProfile.displayName.trim())
+    || [userProfile?.firstName, userProfile?.lastName].filter(Boolean).join(' ').trim()
+    || userProfile?.email
+    || 'Pilot';
+  const userFirstName = userProfile?.firstName?.trim() || userDisplayName.split(' ')[0] || 'Pilot';
+  const handleAccessWebsite = () => {
+    window.open('https://wingmentor.app', '_blank', 'noopener,noreferrer');
+  };
 
   // Sidebar component - HubPage cards only with logo
   const Sidebar = () => {
@@ -224,35 +243,6 @@ export const WingMentorHome: React.FC<WingMentorHomeProps> = ({ onLogout, userPr
                 <img src="/Gemini_Generated_Image_tka3njtka3njtka3.png" alt="Recognition & Achievements" className="hub-card-bg-image" style={{ width: '35%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
               </div>
 
-              {userProfile?.role === 'super_admin' && (
-                <div 
-                  className={`horizontal-card ${mainView === 'mentor-management' ? 'active' : ''}`} 
-                  style={{ 
-                    cursor: 'pointer', 
-                    padding: '0.75rem 1.5rem', 
-                    border: mainView === 'mentor-management' ? '2px solid #0ea5e9' : '2px solid #ef4444',
-                    minHeight: '80px'
-                  }} 
-                  onClick={() => setMainView('mentor-management')}
-                >
-                  <div className="horizontal-card-content-wrapper">
-                    <div style={{ maxWidth: '65%', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ fontSize: '1.25rem', color: '#000000', fontWeight: 'bold' }}>•</div>
-                      <div className="horizontal-card-content" style={{ padding: '1rem 0', textAlign: 'left', flex: 1, maxWidth: '100%' }}>
-                        <h3 className="horizontal-card-title" style={{ fontSize: '1.25rem', marginBottom: '0.25rem', color: '#0f172a', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mentor Management</h3>
-                        <p className="horizontal-card-desc" style={{ maxWidth: '100%', marginBottom: 0, color: '#64748b', fontSize: '0.875rem', lineHeight: 1.4 }}>
-                          Admin panel for platform management
-                        </p>
-                      </div>
-                    </div>
-                    <div className="hub-card-arrow">
-                      <Icons.ArrowRight style={{ width: 20, height: 20 }} />
-                    </div>
-                  </div>
-                  <img src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" alt="Mentor Management" className="hub-card-bg-image" style={{ width: '35%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
-                </div>
-              )}
-
               {/* WingMentor Network Directory Card */}
               <div 
                 className={`horizontal-card ${mainView === 'wingmentor-network' ? 'active' : ''}`} 
@@ -278,7 +268,7 @@ export const WingMentorHome: React.FC<WingMentorHomeProps> = ({ onLogout, userPr
                     <Icons.ArrowRight style={{ width: 20, height: 20 }} />
                   </div>
                 </div>
-                <img src="https://images.unsplash.com/photo-1451187580453-4082a83e6c56?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" alt="WingMentor Network" className="hub-card-bg-image" style={{ width: '35%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+                <img src="https://images.unsplash.com/photo-1451187580453-4082a83e6d4a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" alt="WingMentor Network" className="hub-card-bg-image" style={{ width: '35%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
               </div>
             </div>
           </section>
@@ -437,7 +427,7 @@ export const WingMentorHome: React.FC<WingMentorHomeProps> = ({ onLogout, userPr
               overflow: 'hidden',
               transition: 'all 0.3s ease'
             }} 
-            onClick={() => alert('Transition Program coming soon!')}
+            onClick={() => setMainView('transition')}
             onMouseOver={(e) => {
               e.currentTarget.style.transform = 'translateY(-4px)';
               e.currentTarget.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1)';
@@ -601,7 +591,7 @@ export const WingMentorHome: React.FC<WingMentorHomeProps> = ({ onLogout, userPr
                     opacity: 1,
                     animation: 'slideInOut 8s infinite'
                   }}>
-                    <p style={{ color: '#475569', fontSize: '1.05rem', lineHeight: 1.8, margin: 0, textAlign: 'left' }}>
+                    <div style={{ color: '#475569', fontSize: '1.05rem', lineHeight: 1.8, margin: 0, textAlign: 'left' }}>
                       <strong>Your Foundation Program progress is tracked in real-time.</strong> WingMentor monitors your training advancement and syncs with our comprehensive database.
                       <br /><br />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -632,7 +622,7 @@ export const WingMentorHome: React.FC<WingMentorHomeProps> = ({ onLogout, userPr
                         <span>67% Complete</span>
                         <span>Last sync: 2 min ago</span>
                       </div>
-                    </p>
+                    </div>
                   </div>
 
                   {/* Progress Update 2 */}
@@ -645,7 +635,7 @@ export const WingMentorHome: React.FC<WingMentorHomeProps> = ({ onLogout, userPr
                     opacity: 0,
                     animation: 'slideInOut 8s infinite 4s'
                   }}>
-                    <p style={{ color: '#475569', fontSize: '1.05rem', lineHeight: 1.8, margin: 0, textAlign: 'left' }}>
+                    <div style={{ color: '#475569', fontSize: '1.05rem', lineHeight: 1.8, margin: 0, textAlign: 'left' }}>
                       <strong>Advanced CRM techniques module now available.</strong> The latest module in your Foundation Program includes enhanced simulator scenarios and real-world case studies.
                       <br /><br />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -668,7 +658,7 @@ export const WingMentorHome: React.FC<WingMentorHomeProps> = ({ onLogout, userPr
                           ✅ Module 10: Team Communication
                         </div>
                       </div>
-                    </p>
+                    </div>
                   </div>
                 </div>
 
@@ -2015,6 +2005,95 @@ export const WingMentorHome: React.FC<WingMentorHomeProps> = ({ onLogout, userPr
             minHeight: inverseScalePercent
           }}
         >
+          {/* Global top bar */}
+          <div
+            style={{
+              width: '100%',
+              padding: '1.5rem 2.75rem 1rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              position: 'sticky',
+              top: 0,
+              zIndex: 5,
+              background: 'linear-gradient(180deg, rgba(248,250,252,0.95) 0%, rgba(248,250,252,0.75) 100%)',
+              backdropFilter: 'blur(6px)',
+              borderBottom: '1px solid rgba(226,232,240,0.8)'
+            }}
+          >
+            <div>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8', letterSpacing: '0.08em' }}>WELCOME BACK</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+                <Icons.User style={{ width: 22, height: 22, color: '#2563eb' }} />
+                <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#0f172a', fontWeight: 600 }}>
+                  {userFirstName}
+                </h2>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button
+                onClick={() => setMainView('pilot-profile')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.65rem 1.2rem',
+                  borderRadius: '999px',
+                  border: '1px solid #e2e8f0',
+                  background: '#fff',
+                  color: '#1e293b',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(15,23,42,0.08)'
+                }}
+              >
+                <Icons.User style={{ width: 16, height: 16 }} /> Profile
+              </button>
+
+              <button
+                onClick={() => setMainView('applications')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.65rem 1.2rem',
+                  borderRadius: '999px',
+                  border: '1px solid transparent',
+                  background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+                  color: '#475569',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.8)'
+                }}
+              >
+                <Icons.Settings style={{ width: 16, height: 16 }} /> Settings
+              </button>
+
+              <button
+                onClick={handleAccessWebsite}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.7rem 1.5rem',
+                  borderRadius: '14px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
+                  color: '#fff',
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 10px 25px rgba(31,41,55,0.18)'
+                }}
+              >
+                <Icons.Globe style={{ width: 18, height: 18 }} /> Access Website
+              </button>
+            </div>
+          </div>
+
           {renderMainContent()}
         </div>
       </div>
@@ -2694,7 +2773,15 @@ export const WingMentorHome: React.FC<WingMentorHomeProps> = ({ onLogout, userPr
           </div>
         );
       case 'applications':
-        return <PilotProfilePage onBack={() => setMainView('dashboard')} userProfile={userProfile ?? undefined} />;
+        return (
+          <PilotProfilePage 
+            onBack={() => setMainView('dashboard')} 
+            onViewLogbook={() => setMainView('logbook')}
+            onViewDigitalLogbook={() => setMainView('digital-logbook')}
+            onViewMentorLogbook={() => setMainView('mentor-logbook')}
+            userProfile={userProfile ?? undefined} 
+          />
+        );
       case 'recognition':
         return (
           <RecognitionAchievementPage
@@ -2726,20 +2813,10 @@ export const WingMentorHome: React.FC<WingMentorHomeProps> = ({ onLogout, userPr
         return <AtlasResumePage onBack={() => setMainView('recognition')} onPrint={() => setMainView('printable-resume')} userProfile={userProfile} />;
       case 'printable-resume':
         return <PrintableResumePage onBack={() => setMainView('atlas-resume')} userProfile={userProfile} />;
-      case 'mentor-management':
-        return userProfile?.role === 'super_admin' ? (
-          <MentorManagementPage 
-            onBack={() => setMainView('dashboard')} 
-            onLogout={onLogout}
-            userProfile={userProfile} 
-            onSwitchSystem={() => {}} 
-            currentSystem="wms" 
-          />
-        ) : (
-          <DashboardView />
-        );
       case 'foundational':
-        return <FoundationalProgramPage onBack={() => setMainView('programs')} />;
+        return <FoundationalProgramPage onBack={() => setMainView('programs')} userProfile={userProfile} />;
+      case 'transition':
+        return <TransitionProgramPage onBack={() => setMainView('programs')} userProfile={userProfile} />;
       case 'pilot-profile':
         return <PilotProfilePage onBack={() => setMainView('dashboard')} userProfile={userProfile ?? undefined} />;
       case 'contact':

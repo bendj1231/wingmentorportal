@@ -7,6 +7,7 @@ uniform float uTime;
 uniform vec2 uResolution;
 uniform vec3 uSunColor;
 uniform vec3 uAmbientColor;
+uniform vec3 uShadowColor;
 uniform vec3 uSkyZenith;
 uniform vec3 uSkyHorizon;
 
@@ -54,7 +55,8 @@ void main() {
     vec2 p = uv * 2.0 - 1.0;
     p.x *= uResolution.x / uResolution.y;
 
-    float t = uTime * 0.25; // Speed of flying into the clouds
+    float t = uTime * 0.35; // Speed of flying into the clouds
+    vec2 wind = vec2(uTime * 0.01, uTime * 0.015);
     
     // Background Sky
     vec3 sky = mix(uSkyHorizon, uSkyZenith, uv.y);
@@ -66,7 +68,7 @@ void main() {
     // Render 4 massive layers of overlapping parallax cumulus clouds
     for(float i = 1.0; i <= 4.0; i++) {
         // Zooming forward into the clouds by progressing the Z-axis of the 3D noise
-        vec2 cp2d = p * (0.8 + i * 0.4); // Scale decreases for foreground
+        vec2 cp2d = (p + wind * (0.6 + i * 0.2)) * (0.8 + i * 0.4); // Scale decreases for foreground
         cp2d.y -= i * 0.15 - 0.5;      // Shift layers vertically
         
         vec3 cp = vec3(cp2d, -t * (0.5 + i * 0.25)); // Move forward through the noise
@@ -83,14 +85,15 @@ void main() {
         if (cloudAlpha > 0.0) {
             // Fake volumetric lighting: sample the density slightly closer to the sun.
             vec3 lightDir = normalize(vec3(sunPos - p, 0.5));
-            float shadowSample = fbm(cp + lightDir * 0.15); 
-            
+            float shadowSample = fbm(cp + lightDir * 0.15);
+
             // "thickness" measures how much cloud is between us and the light.
             float thickness = smoothstep(threshold - 0.1, threshold + 0.3, shadowSample);
-            
-            // Mix between shadow color and bright sunlit color based on exposure to 'sun'
+
+            // Mix between ambient, shadow and sunlit color based on exposure to 'sun'
             vec3 cloudCol = mix(uSunColor, uAmbientColor, thickness * 1.2);
-            
+            cloudCol = mix(uShadowColor, cloudCol, clamp(uv.y + 0.1, 0.0, 1.0));
+
             // Add delicate subsurface scattering / silver lining rim light at the very edges
             float rimLight = smoothstep(threshold + 0.05, threshold, d);
             cloudCol += uSunColor * rimLight * 0.6;
@@ -99,6 +102,17 @@ void main() {
             col = mix(col, cloudCol, cloudAlpha * 0.95);
         }
     }
+
+    // Add wispy high-altitude haze for cinematic depth
+    vec2 highAltitudeDrift = wind * 2.5;
+    float wispDensity = fbm(vec3(p * 3.5 + highAltitudeDrift, t * 0.2 + 2.0));
+    float wisps = smoothstep(0.55, 0.85, wispDensity) * 0.25;
+    col += vec3(0.9, 0.95, 1.0) * wisps;
+
+    // Fake light shafts
+    float ray = max(dot(normalize(vec3(p, 0.2)), normalize(vec3(0.5, 0.8, 0.2))), 0.0);
+    float godRay = pow(ray, 8.0) * 0.4;
+    col += uSunColor * godRay;
 
     // Very subtle beautiful vignette to frame the scene
     float dist = length(uv - 0.5);
@@ -122,18 +136,20 @@ const ShaderPlane = ({ variant }: { variant: 'light' | 'dark' }) => {
     const uniforms = useMemo(() => {
         // Light mode (Platform): Bright, clean, white clouds with light blue/grey shadows
         const lightModeUniforms = {
-            uSunColor: new THREE.Color(1.0, 1.0, 1.0),
-            uAmbientColor: new THREE.Color(0.85, 0.9, 0.95), // Bright clouds
-            uSkyZenith: new THREE.Color(0.8, 0.9, 1.0),      // Very pale sky
-            uSkyHorizon: new THREE.Color(0.9, 0.95, 1.0),
+            uSunColor: new THREE.Color(1.0, 0.95, 0.88),
+            uAmbientColor: new THREE.Color(0.85, 0.92, 1.05), // Bright clouds
+            uShadowColor: new THREE.Color(0.68, 0.78, 0.92),
+            uSkyZenith: new THREE.Color(0.78, 0.9, 1.0),      // Very pale sky
+            uSkyHorizon: new THREE.Color(0.92, 0.97, 1.0),
         };
 
         // Dark mode (Loading): Moody, deep blue skies with heavy dark shadows
         const darkModeUniforms = {
-            uSunColor: new THREE.Color(1.0, 1.0, 1.0),
-            uAmbientColor: new THREE.Color(0.4, 0.5, 0.6),   // Dark heavy clouds
-            uSkyZenith: new THREE.Color(0.3, 0.55, 0.8),     // Deep sky blue
-            uSkyHorizon: new THREE.Color(0.6, 0.75, 0.9),
+            uSunColor: new THREE.Color(0.95, 0.9, 0.85),
+            uAmbientColor: new THREE.Color(0.35, 0.48, 0.62),   // Dark heavy clouds
+            uShadowColor: new THREE.Color(0.18, 0.25, 0.38),
+            uSkyZenith: new THREE.Color(0.26, 0.46, 0.72),     // Deep sky blue
+            uSkyHorizon: new THREE.Color(0.48, 0.66, 0.85),
         };
 
         const activeConfig = variant === 'light' ? lightModeUniforms : darkModeUniforms;
@@ -143,6 +159,7 @@ const ShaderPlane = ({ variant }: { variant: 'light' | 'dark' }) => {
             uResolution: { value: new THREE.Vector2(size.width, size.height) },
             uSunColor: { value: activeConfig.uSunColor },
             uAmbientColor: { value: activeConfig.uAmbientColor },
+            uShadowColor: { value: activeConfig.uShadowColor },
             uSkyZenith: { value: activeConfig.uSkyZenith },
             uSkyHorizon: { value: activeConfig.uSkyHorizon },
         };
@@ -173,7 +190,7 @@ const ShaderPlane = ({ variant }: { variant: 'light' | 'dark' }) => {
 export const CloudBackground = ({ variant = 'light' }: { variant?: 'light' | 'dark' }) => {
     return (
         <div style={{ position: 'fixed', inset: 0, zIndex: -1, pointerEvents: 'none' }}>
-            <Canvas orthographic camera={{ position: [0, 0, 1], zoom: 1 }} dpr={[1, 1]}>
+            <Canvas orthographic camera={{ position: [0, 0, 1], zoom: 1 }} dpr={[1, 1]} frameloop="always">
                 <ShaderPlane variant={variant} />
             </Canvas>
         </div>

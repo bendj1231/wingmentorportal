@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Icons } from '../App';
+import type { UserProfile } from '../types/user';
+import { RestrictionPage } from './RestrictionPage';
 
 interface Module {
     id: string;
@@ -26,6 +28,7 @@ interface FoundationalProgramPageProps {
     onLaunchModule02?: () => void;
     onLaunchModule03?: () => void;
     completedModules?: string[];
+    userProfile?: UserProfile | null;
 }
 
 const FoundationalProgramPage: React.FC<FoundationalProgramPageProps> = ({
@@ -37,13 +40,45 @@ const FoundationalProgramPage: React.FC<FoundationalProgramPageProps> = ({
     onLaunchModule01,
     onLaunchModule02,
     onLaunchModule03,
-    completedModules = []
+    completedModules = [],
+    userProfile
 }) => {
     const [activeView, setActiveView] = useState<'cards' | 'core' | 'profile' | 'overview' | 'module-detail'>('cards');
     const [selectedModule, setSelectedModule] = useState<Module | null>(null);
     const [isEnrolled, setIsEnrolled] = useState(false);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [hoveredModule, setHoveredModule] = useState<string | null>(null);
+
+    const displayName =
+        (userProfile?.displayName && userProfile.displayName.trim()) ||
+        [userProfile?.firstName, userProfile?.lastName].filter(Boolean).join(' ').trim() ||
+        userProfile?.email ||
+        'Pilot';
+
+    // Check if user has access to foundational program
+    const checkProgramAccess = () => {
+        if (!userProfile) return true; // Allow access if no profile (guest/preview mode)
+        
+        const foundationalAccess = userProfile.appAccess?.find(access => access.appId === 'foundational');
+        if (!foundationalAccess) {
+            // If no specific access, check if it's required (it is)
+            return true; // Default to granted for required apps
+        }
+        
+        return foundationalAccess.granted && !foundationalAccess.restricted;
+    };
+
+    // If access is restricted, show restriction page
+    if (!checkProgramAccess()) {
+        return (
+            <RestrictionPage
+                onBack={() => onBack?.() || (() => {})}
+                userProfile={userProfile!}
+                programName="Foundational Program"
+                restrictionReason="Your access to the Foundational Program has been restricted by an administrator. Please contact your mentor or program administrator for assistance."
+            />
+        );
+    }
 
     const modules: Module[] = [
         {
@@ -345,7 +380,11 @@ const FoundationalProgramPage: React.FC<FoundationalProgramPageProps> = ({
                 <header className="dashboard-header" style={{
                     borderBottom: '1px solid #f1f5f9',
                     paddingBottom: '2.5rem',
-                    backgroundColor: 'white'
+                    backgroundColor: 'white',
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 20,
+                    boxShadow: '0 6px 12px rgba(15,23,42,0.05)'
                 }}>
                     <div style={{ position: 'absolute', top: '1.5rem', left: '2rem' }}>
                         <button

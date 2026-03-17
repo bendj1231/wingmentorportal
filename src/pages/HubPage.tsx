@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Icons } from '../App';
 import type { UserProfile } from '../types/user';
+import { db } from '../lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 interface HubPageProps {
     onSelectCategory: (category: 'programs' | 'pathways' | 'applications') => void;
@@ -10,7 +12,49 @@ interface HubPageProps {
     onRecognition?: () => void;
 }
 
-const PilotPortfolioCard: React.FC<{ onClick: () => void }> = ({ onClick }) => (
+const PilotPortfolioCard: React.FC<{ onClick: () => void; userProfile?: UserProfile | null }> = ({ onClick, userProfile }) => {
+    const [totalHours, setTotalHours] = useState(0);
+    const [picHours, setPicHours] = useState(0);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchLogbookHours = async () => {
+            if (!userProfile?.id || !db) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const logsQuery = query(
+                    collection(db, 'flightLogs'),
+                    where('userId', '==', userProfile.id)
+                );
+                const snapshot = await getDocs(logsQuery);
+                let total = 0;
+                let pic = 0;
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const hours = data.hours || 0;
+                    total += hours;
+                    if (data.category?.toLowerCase() === 'pic' || data.category?.toLowerCase() === 'solo') {
+                        pic += hours;
+                    }
+                });
+
+                setTotalHours(total);
+                setPicHours(pic);
+            } catch (error) {
+                console.error('Error fetching logbook hours:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchLogbookHours();
+    }, [userProfile?.id]);
+
+    return (
     <div
         className="pilot-portfolio-card"
         style={{
@@ -61,28 +105,33 @@ const PilotPortfolioCard: React.FC<{ onClick: () => void }> = ({ onClick }) => (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.75rem' }}>
                     <div style={{ background: '#eff6ff', borderRadius: '10px', padding: '0.65rem', textAlign: 'center' }}>
                         <p style={{ margin: 0, fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase' }}>Total HR</p>
-                        <p style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>194</p>
+                        <p style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>{loading ? '...' : totalHours.toFixed(1)}</p>
                     </div>
                     <div style={{ background: '#eff6ff', borderRadius: '10px', padding: '0.65rem', textAlign: 'center' }}>
                         <p style={{ margin: 0, fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase' }}>PIC HR</p>
-                        <p style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>9</p>
+                        <p style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>{loading ? '...' : picHours.toFixed(1)}</p>
                     </div>
                 </div>
-                <div style={{ marginTop: '0.75rem', borderRadius: '12px', background: '#f0fdf4', padding: '0.75rem' }}>
-                    <div style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 600 }}>License Current (Verified)</div>
+                <div style={{ marginTop: '0.75rem', borderRadius: '12px', background: totalHours > 0 ? '#f0fdf4' : '#fef3c7', padding: '0.75rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: totalHours > 0 ? '#16a34a' : '#d97706', fontWeight: 600 }}>
+                        {totalHours > 0 ? 'Hours Verified' : 'Hours Pending Verification'}
+                    </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.35rem', fontSize: '0.75rem', color: '#0f172a' }}>
                         <span>Type</span>
                         <strong>Student Pilot</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#0f172a' }}>
                         <span>Status</span>
-                        <strong style={{ color: '#059669' }}>Active</strong>
+                        <strong style={{ color: totalHours > 0 ? '#059669' : '#d97706' }}>
+                            {totalHours > 0 ? 'Active' : 'Pending'}
+                        </strong>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-);
+    );
+};
 
 export const HubPage: React.FC<HubPageProps> = ({ onSelectCategory, onLogout, userProfile, onMentorManagement, onRecognition }) => {
     return (
@@ -160,7 +209,7 @@ export const HubPage: React.FC<HubPageProps> = ({ onSelectCategory, onLogout, us
                             <img src="https://media.licdn.com/dms/image/v2/D4D22AQEaR85c3VezDQ/feedshare-shrink_800/B4DZjrNtjxHsAk-/0/1756292898181?e=2147483647&v=beta&t=q2221fZ_LauMfDDKZZ1dCJJtrqSgNw_HxIAF62_qNHA" alt="Recognition" className="hub-card-bg-image" />
                         </div>
 
-                        <PilotPortfolioCard onClick={() => onSelectCategory('applications')} />
+                        <PilotPortfolioCard onClick={() => onSelectCategory('applications')} userProfile={userProfile} />
 
                         {/* Mentor Management Card - Only for Super Admins */}
                         {userProfile?.role === 'super_admin' && onMentorManagement && (

@@ -112,11 +112,11 @@ const DEFAULT_PILOT: PilotProfile = {
     linkedin: 'linkedin.com/in/bbowler',
   },
   stats: {
-    totalHours: 1540,
-    picHours: 620,
-    ifrHours: 210,
-    nightHours: 95,
-    simulators: ['Airbus A320', 'Boeing 737 MAX'],
+    totalHours: 0,
+    picHours: 0,
+    ifrHours: 0,
+    nightHours: 0,
+    simulators: [],
   },
   mentorship: {
     hours: 22,

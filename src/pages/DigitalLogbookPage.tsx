@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
 import { collection, query, where, orderBy, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import type { UserProfile } from '../types/user';
 
 interface FlightLogEntry {
   id: string;
@@ -17,11 +18,7 @@ interface FlightLogEntry {
 
 interface DigitalLogbookPageProps {
   onBack: () => void;
-  userProfile?: {
-    uid?: string;
-    firstName?: string;
-    lastName?: string;
-  } | null;
+  userProfile?: UserProfile | null;
 }
 
 export const DigitalLogbookPage: React.FC<DigitalLogbookPageProps> = ({ onBack, userProfile }) => {
@@ -40,11 +37,11 @@ export const DigitalLogbookPage: React.FC<DigitalLogbookPageProps> = ({ onBack, 
 
   useEffect(() => {
     fetchFlightLogs();
-  }, [userProfile?.uid]);
+  }, [userProfile?.id]);
 
   const fetchFlightLogs = async () => {
-    if (!userProfile?.uid || !db) {
-      console.log('No user UID or Firebase not initialized');
+    if (!userProfile?.id || !db) {
+      console.log('No user ID or Firebase not initialized');
       setLoading(false);
       return;
     }
@@ -53,7 +50,7 @@ export const DigitalLogbookPage: React.FC<DigitalLogbookPageProps> = ({ onBack, 
       setLoading(true);
       const logbookQuery = query(
         collection(db, 'flightLogs'),
-        where('userId', '==', userProfile.uid),
+        where('userId', '==', userProfile.id),
         orderBy('date', 'desc')
       );
       const logbookSnapshot = await getDocs(logbookQuery);
@@ -80,15 +77,42 @@ export const DigitalLogbookPage: React.FC<DigitalLogbookPageProps> = ({ onBack, 
   };
 
   const handleAddEntry = async () => {
-    if (!userProfile?.uid || !db) return;
+    console.log('=== Save Entry Debug Info ===');
+    console.log('userProfile:', userProfile);
+    console.log('userProfile type:', typeof userProfile);
+    console.log('userProfile keys:', userProfile ? Object.keys(userProfile) : 'null');
+    console.log('userProfile.id:', userProfile?.id);
+    console.log('db:', db);
+    console.log('db type:', typeof db);
+    console.log('formData:', formData);
+    console.log('============================');
+    
+    if (!userProfile?.id) {
+      console.error('No user ID found - userProfile is:', userProfile);
+      alert(`User not authenticated. Debug info: ${JSON.stringify({
+        hasUserProfile: !!userProfile,
+        userProfileType: typeof userProfile,
+        userProfileKeys: userProfile ? Object.keys(userProfile) : null,
+        hasId: !!userProfile?.id
+      })}`);
+      return;
+    }
+    
+    if (!db) {
+      console.error('Firebase not initialized');
+      alert('Firebase connection not available. Please check your Firebase configuration.');
+      return;
+    }
+    
     if (!formData.date || !formData.aircraftType || !formData.hours) {
       alert('Please fill in Date, Aircraft Type, and Hours');
       return;
     }
 
     try {
-      await addDoc(collection(db, 'flightLogs'), {
-        userId: userProfile.uid,
+      console.log('Attempting to add document to flightLogs...');
+      const docRef = await addDoc(collection(db, 'flightLogs'), {
+        userId: userProfile.id,
         date: formData.date,
         aircraftType: formData.aircraftType,
         registration: formData.registration,
@@ -98,6 +122,9 @@ export const DigitalLogbookPage: React.FC<DigitalLogbookPageProps> = ({ onBack, 
         remarks: formData.remarks,
         createdAt: new Date().toISOString()
       });
+      
+      console.log('Document added successfully with ID:', docRef.id);
+      alert('Flight entry saved successfully!');
       
       setFormData({
         date: '',
@@ -112,7 +139,7 @@ export const DigitalLogbookPage: React.FC<DigitalLogbookPageProps> = ({ onBack, 
       fetchFlightLogs();
     } catch (error) {
       console.error('Error adding flight log:', error);
-      alert('Failed to add flight entry');
+      alert(`Failed to add flight entry: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

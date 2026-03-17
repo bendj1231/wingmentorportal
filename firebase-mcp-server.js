@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 
-const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
-const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
-const { 
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { 
   CallToolRequestSchema,
   ErrorCode,
   ListToolsRequestSchema,
   McpError 
-} = require('@modelcontextprotocol/sdk/types.js');
+} from '@modelcontextprotocol/sdk/types.js';
 
 // Firebase Admin SDK
-const admin = require('firebase-admin');
+import admin from 'firebase-admin';
 
 // Initialize Firebase Admin
 const serviceAccount = {
-  projectId: process.env.FIREBASE_PROJECT_ID,
+  project_id: process.env.FIREBASE_PROJECT_ID,
   clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
   privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
 };

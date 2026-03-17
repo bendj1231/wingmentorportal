@@ -2,14 +2,8 @@
   "mcpServers": {
     "firebase": {
       "command": "node",
-      "args": ["firebase-mcp-server.js"],
-      "cwd": ".",
-      "env": {
-        "FIREBASE_PROJECT_ID": "wingmentor-ab3ad",
-        "FIREBASE_CLIENT_EMAIL": "firebase-adminsdk-fbsvc@wingmentor-ab3ad.iam.gserviceaccount.com",
-        "FIREBASE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCuzPHpyn9caZ8T\njlVt6zMELVR1Rn10rXJgtb6McJYjJPipZTmFEY4xIsCZ5OM3fGr57VF++mf2txKT\nrmef07FPa0LQPpRuxIKb40ZshiOI6LZAsfS2VjlRBjOsmu+bgexJV3HwAsu4bSNG\nm2ivmJvG15IT+jxUtvm/DM7QmM27fOWN8MP0LixDKqRH9G5JKn6nFJSoa7ivgZdi\n23VhzrrPEJ/wADuJsN7+41pgEytzN8fbin3WGQTb4zDTyDkhqYHmlBhjAvjmKH02\nm8Ai73HVY+O8e4V9+dU+W5Sm01XZ67wD3ipImKdkDUeUfgQoN/a1Diw89+KdLolF\n0CWI7QFzAgMBAAECggEAHZJATqvaNfkMV1OZ8jl67Pb6NcjSCn4ZPnEgpkOZsqJb\nitS8EV3x7zAQ4zgMlGNw+Y0DX3bfRaac9uznTOuUMHpV2ELt+3s1GUgursdWlZ/A\nzVsNqhcWJTXmYgnoBSfKoHGxrcfbTPzxnc1GvYYUvGPVq5mGwVIfGAoDpthi3Zew\n1wzb+osKrlq2gvxRUl5zgnW2tz2uxxcmgYI1+489v7rQquVpsn2Wrp3RyTAk/YHo\nEbR0T21Ixig/8I43AXmJkOesWBqTN/ZJTou04iScV0xQz/x43Mic0spm8+vG7swF\ny28MXbUF9P8Z+v90VIhDQKfkLvLQjIiOY1jJJg44iQKBgQDepNq7mwVmbD83Rsta\nOT5tdMDhSY4rj1IZhTXaDjdXO/5xUAYpkTOlNdrUg5TOukIqq9BrvlAhoAN9fSw7\n14bJ4tBIABB0U+SPyC0iExYWzSxU8kduHOnLYl3rrg7ZDNBuCgaNZD9g9zCd2DHg\nLuN9Hd1haa5cv17oxGzx1sEV5wKBgQDI/SKdtXkZHcwSkUr3sRK+86HVYiKRMd/L\nP6XZcbgCFrfAibdTesHGuPld0qiovj/bxQPvgbVZSIy8TUEYAxMntuR1KaO6GtrQ\nqjwzqoqVhX0gLmhwqaWgEwJmQcjgxKI01+dFx1asdcAT+IeLNcoOBALM7iQa/1Xf\n6cAyi45ulQKBgHzowE7AiicMU+sPLMdRllSSTCQYwEpv/f+TXMMZdrLaVcX8v3hS\nnkbyD/NqXvIcTULjYesQuqQiwdKFh2uLX3OkbHX4k0KwTmrcQ3X6f0oLkfOWebyt\nO/1/EnJHFM1xAv65YTOyKlycUgo8YL8Fj1uChdFBGTGvq++rQ/PqKCnBAoGANOiO\nCD4RVs9FPU4KEhIHAUVZQLbIqrgaVYK3wfnxmnsofALEw7D4+bsPyeb+hw0t+khu\ntMnMV2iFw7wCerO0gyveEAmaFA+lsnBd0KwAN0QgoCwXSjEebHkUlJ6UpracjJSZ\nSQEki9mjap5t7/OE8ROVOSUnVAQLMxpxgdzC7dECgYAamzddSgLV89FIswgKqe2b\njgAj/8p9DQsaXJh1RRNHGJfMe4vPPJp+PDkvppJW3gV+/E+DKqkFk1fyMr2zxDxa\n4Jwdze5IFzPtMrKxFaLZWHDKRA08m9+FN9QsAB6DDNWBs7rr+a3YLbKTTUMq+NHQ\n2rTqcxBM09fhQ35Wxm6yug==\n-----END PRIVATE KEY-----\n",
-        "FIREBASE_DATABASE_URL": "https://wingmentor-ab3ad-default-rtdb.firebaseio.com"
-      }
+      "args": [".windsurf/mcp-servers/firebase-mcp-server.js"],
+      "cwd": "."
     }
   }
 }

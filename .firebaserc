@@ -1,5 +1,7 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "wingmentor-ab3ad"
+  },
   "targets": {},
   "etags": {}
 }
